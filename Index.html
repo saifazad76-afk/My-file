@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Location Tracker (With Permission)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: white;
+      padding: 20px 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+    }
+    h1 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: 14px;
+      color: #555;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      background: #2563eb;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button.stop {
+      background: #dc2626;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    .info {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #333;
+      word-break: break-word;
+    }
+    iframe {
+      margin-top: 15px;
+      width: 100%;
+      height: 260px;
+      border: none;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Live Location Tracking</h1>
+    <p>This site tracks your location in real-time <strong>only with your permission</strong>.</p>
+    <button onclick="startTracking()">Start Live Tracking</button>
+    <button class="stop" onclick="stopTracking()">Stop Tracking</button>
+
+    <div class="info" id="output"></div>
+    <iframe id="map" loading="lazy"></iframe>
+  </div>
+
+  <script>
+    let watchId = null;
+
+    function startTracking() {
+      const output = document.getElementById("output");
+      const map = document.getElementById("map");
+
+      if (!navigator.geolocation) {
+        output.innerHTML = "Geolocation is not supported by your browser.";
+        return;
+      }
+
+      output.innerHTML = "Requesting permission for live location...";
+
+      watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          const accuracy = position.coords.accuracy;
+
+          output.innerHTML = `
+            <strong>Live Tracking Active</strong><br />
+            Latitude: ${lat}<br />
+            Longitude: ${lon}<br />
+            Accuracy: ${accuracy} meters
+          `;
+
+          // Update map continuously
+          map.src = `https://maps.google.com/maps?q=${lat},${lon}&z=16&output=embed`;
+        },
+        (error) => {
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              output.innerHTML = "You denied the request for location.";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              output.innerHTML = "Location information is unavailable.";
+              break;
+            case error.TIMEOUT:
+              output.innerHTML = "The request to get your location timed out.";
+              break;
+            default:
+              output.innerHTML = "An unknown error occurred.";
+              break;
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 5000
+        }
+      );
+    }
+
+    function stopTracking() {
+      const output = document.getElementById("output");
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+        output.innerHTML = "<strong>Live tracking stopped.</strong>";
+      }
+    }
+  </script>
+</body>
+</html>
